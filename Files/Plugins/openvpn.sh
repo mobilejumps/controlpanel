@@ -32,13 +32,13 @@ sudo touch stunnel.conf
 echo "client = no" > /etc/stunnel/stunnel.conf
 echo "pid = /var/run/stunnel.pid" >> /etc/stunnel/stunnel.conf
 echo "[openvpn]" >> /etc/stunnel/stunnel.conf
-echo "accept = 443" >> /etc/stunnel/stunnel.conf
-echo "connect = 127.0.0.1:1194" >> /etc/stunnel/stunnel.conf
+echo "accept = 448" >> /etc/stunnel/stunnel.conf
+echo "connect = 127.0.0.1:443" >> /etc/stunnel/stunnel.conf
 echo "cert = /etc/stunnel/stunnel.pem" >> /etc/stunnel/stunnel.conf
 sudo sed -i -e 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -A INPUT -p tcp --dport 448 -j ACCEPT
 sudo cp /etc/stunnel/stunnel.pem ~
-echo "client = yes\ndebug = 6\n[openvpn]\naccept = 127.0.0.1:1194\nconnect = $IPADDRESS:443\nTIMEOUTclose = 0\nverify = 0\nsni = $1" > /var/www/html/stunnel.conf
+echo "client = yes\ndebug = 6\n[openvpn]\naccept = 127.0.0.1:443\nconnect = $IPADDRESS:448\nTIMEOUTclose = 0\nverify = 0\nsni = $1" > /var/www/html/stunnel.conf
 # openvpn
 cp -r /usr/share/easy-rsa/ /etc/openvpn
 mkdir /etc/openvpn/easy-rsa/keys
@@ -71,7 +71,7 @@ cp /etc/openvpn/easy-rsa/keys/server.key /etc/openvpn/server.key
 cp /etc/openvpn/easy-rsa/keys/ca.crt /etc/openvpn/ca.crt
 # setting server
 cat > /etc/openvpn/server.conf <<-END
-port 1194
+port 443
 proto tcp
 dev tun
 ca ca.crt
@@ -105,7 +105,7 @@ cat > /var/www/html/openvpn.ovpn <<-END
 client
 dev tun
 proto tcp-client
-remote $IPADDRESS:1194@$1 1194
+remote $IPADDRESS:443@$1 443
 persist-key
 persist-tun
 dev tun
@@ -141,7 +141,7 @@ cat > /var/www/html/openvpnssl.ovpn <<-END
 client
 dev tun
 proto tcp
-remote 127.0.0.1 1194
+remote 127.0.0.1 443
 persist-key
 persist-tun
 dev tun
@@ -172,10 +172,10 @@ apt-get -y install squid3
 cat > /etc/squid/squid.conf <<-END
 acl localhost src 127.0.0.1/32 ::1
 acl to_localhost dst 127.0.0.0/8 0.0.0.0/32 ::1
-acl SSL_ports port 443
+acl SSL_ports port 448
 acl Safe_ports port 80
 acl Safe_ports port 21
-acl Safe_ports port 443
+acl Safe_ports port 448
 acl Safe_ports port 70
 acl Safe_ports port 210
 acl Safe_ports port 1025-65535
@@ -226,8 +226,8 @@ COMMIT
 -A INPUT -p tcp --dport 85  -m state --state NEW -j ACCEPT
 -A INPUT -p tcp --dport 80  -m state --state NEW -j ACCEPT
 -A INPUT -p udp --dport 80  -m state --state NEW -j ACCEPT
+-A INPUT -p tcp --dport 448  -m state --state NEW -j ACCEPT
 -A INPUT -p tcp --dport 443  -m state --state NEW -j ACCEPT
--A INPUT -p tcp --dport 1194  -m state --state NEW -j ACCEPT
 -A INPUT -p udp --dport 1194  -m state --state NEW -j ACCEPT
 -A INPUT -p tcp --dport 3128  -m state --state NEW -j ACCEPT
 -A INPUT -p udp --dport 3128  -m state --state NEW -j ACCEPT
@@ -265,7 +265,7 @@ sed -i '$ i\echo "nameserver 8.8.4.4" >> /etc/resolv.conf' /etc/rc.local
 ln -fs /usr/share/zoneinfo/Asia/Manila /etc/localtime
 # setting ufw
 ufw allow ssh
-ufw allow 1194/tcp
+ufw allow 443/tcp
 sed -i 's|DEFAULT_INPUT_POLICY="DROP"|DEFAULT_INPUT_POLICY="ACCEPT"|' /etc/default/ufw
 sed -i 's|DEFAULT_FORWARD_POLICY="DROP"|DEFAULT_FORWARD_POLICY="ACCEPT"|' /etc/default/ufw
 cat > /etc/ufw/before.rules <<-END
